@@ -43,19 +43,18 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── HEADER ─────── */
-.header{background:var(--header-bg);color:white;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
-.header-brand{display:flex;align-items:baseline;gap:10px;}
-.header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:white;letter-spacing:-0.3px;}
-.header-sub{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;}
-.header-right{display:flex;align-items:center;gap:8px;}
-.header-select{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:white;padding:5px 10px;border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;}
+.header{background:var(--header-bg);color:white;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;gap:8px;}
+.header-brand{display:flex;align-items:baseline;gap:8px;min-width:0;flex-shrink:1;}
+.header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:white;letter-spacing:-0.3px;white-space:nowrap;}
+.header-sub{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;white-space:nowrap;}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.header-select{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:white;padding:5px 8px;border-radius:7px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;}
 .header-select option{background:#18181B;}
 .sync-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.5);}
 .sync-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;}
 .sync-dot.spin{background:#fbbf24;animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.btn-header{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;}
-.btn-header:hover{background:rgba(255,255,255,0.2);}
+.btn-header{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
 
 /* ── NAV ─────── */
 .nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;padding:0 16px;gap:2px;scrollbar-width:none;}
@@ -128,7 +127,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
 .cat-Otros{background:var(--surface2);color:var(--ink2);}
 
 /* ── FIJOS ─────── */
-.fijo-item{display:grid;grid-template-columns:1fr 110px 110px 56px;gap:8px;align-items:center;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;}
+.fijo-item{display:grid;grid-template-columns:1fr 110px 110px 56px 36px;gap:8px;align-items:center;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;}
 .fijo-input{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;font-family:'Inter',sans-serif;color:var(--ink);text-align:right;}
 .fijo-pagado{display:flex;align-items:center;justify-content:center;}
 .fijo-pagado input[type=checkbox]{width:15px;height:15px;accent-color:var(--green);cursor:pointer;}
@@ -184,10 +183,12 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
   .form-row{grid-template-columns:1fr;}
   .gasto-item{grid-template-columns:64px 1fr 80px 50px;}
   .gasto-cat{display:none;}
-  .fijo-item{grid-template-columns:1fr 90px 40px;}
+  .fijo-item{grid-template-columns:1fr 80px 36px 30px;}
   .fijo-pres{display:none;}
   .header-sub{display:none;}
+  .sync-txt-label{display:none;}
   .kpi-val{font-size:18px;}
+  .header-title{font-size:17px;}
 }
 </style>
 </head>
@@ -221,24 +222,26 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
       <div class="header-sub">Presupuesto familiar</div>
     </div>
     <div class="header-right">
-      <select id="mesSelect" class="header-select" onchange="cambiarMes()">
-        <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-        <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-        <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-        <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-      </select>
-      <select id="anioSelect" class="header-select" onchange="cambiarMes()">
-        <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
-      </select>
-      <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">Guardado</span></div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <select id="mesSelect" class="header-select" onchange="cambiarMes()">
+          <option value="0">Ene</option><option value="1">Feb</option><option value="2">Mar</option>
+          <option value="3">Abr</option><option value="4">May</option><option value="5">Jun</option>
+          <option value="6">Jul</option><option value="7">Ago</option><option value="8">Sep</option>
+          <option value="9">Oct</option><option value="10">Nov</option><option value="11">Dic</option>
+        </select>
+        <select id="anioSelect" class="header-select" onchange="cambiarMes()">
+          <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+        </select>
+      </div>
+      <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt" class="sync-txt-label">Guardado</span></div>
       <button class="btn-header" onclick="logout()">Salir</button>
     </div>
   </div>
 
   <div class="nav">
-    <button class="nav-btn active" onclick="showTab('resumen',this)">Resumen</button>
+    <button class="nav-btn active" onclick="showTab('gastos',this)">+ Gasto</button>
+    <button class="nav-btn" onclick="showTab('resumen',this)">Resumen</button>
     <button class="nav-btn" onclick="showTab('anual',this)">Anual</button>
-    <button class="nav-btn" onclick="showTab('gastos',this)">+ Gasto</button>
     <button class="nav-btn" onclick="showTab('fijos',this)">Fijos</button>
     <button class="nav-btn" onclick="showTab('ingresos',this)">Ingresos</button>
     <button class="nav-btn" onclick="showTab('historial',this)">Historial</button>
@@ -248,7 +251,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
   <div class="main">
 
     <!-- RESUMEN MENSUAL -->
-    <div id="tab-resumen" class="tab-content active">
+    <div id="tab-resumen" class="tab-content">
       <div id="resumen-anterior"></div>
       <div class="card">
         <div class="card-title">Mes actual <span id="res-mes-label"></span></div>
@@ -289,12 +292,15 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     </div>
 
     <!-- GASTOS -->
-    <div id="tab-gastos" class="tab-content">
+    <div id="tab-gastos" class="tab-content active">
       <div class="card">
         <div class="card-title">Registrar gasto variable</div>
         <div class="gasto-form">
           <div class="form-row">
-            <div class="form-group"><label>Fecha</label><input type="date" id="g-fecha"></div>
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" id="g-fecha" style="width:100%;display:block;">
+            </div>
             <div class="form-group"><label>Monto ($)</label><input type="number" id="g-monto" placeholder="0" min="0"></div>
           </div>
           <div class="form-row">
@@ -306,8 +312,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
                 <option>Supermercado 4</option><option>Supermercado 5</option>
                 <option>Bencina/Transporte</option><option>Medicos + Procedimientos</option>
                 <option>Farmacia</option><option>Ropa Mandi</option><option>Utiles Mandi</option>
-                <option>T.O / Fonoaudióloga</option><option>Crédito de consumo</option>
-                <option>Ocio</option><option>Parte</option><option>Otro</option>
+                <option>T.O / Fonoaudióloga</option><option>Ocio</option><option>Otro</option>
               </select>
             </div>
             <div class="form-group">
@@ -353,8 +358,8 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
             </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 110px 110px 56px;gap:8px;padding:0 12px 8px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
-          <span>Concepto</span><span style="text-align:right;">Actual</span><span class="fijo-pres" style="text-align:right;">Presup.</span><span style="text-align:center;">Pagado</span>
+        <div style="display:grid;grid-template-columns:1fr 110px 110px 56px 36px;gap:8px;padding:0 12px 8px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
+          <span>Concepto</span><span style="text-align:right;">Actual</span><span class="fijo-pres" style="text-align:right;">Presup.</span><span style="text-align:center;">Pagado</span><span></span>
         </div>
         <div id="fijos-list"></div>
         <div class="total-row">
@@ -723,6 +728,7 @@ function renderFijos(){
       <input class="fijo-input" type="number" value="${f.actual||0}" onchange="updateFijo('${f.id}',this.value)">
       <span class="fijo-pres" style="font-size:11px;color:var(--ink3);text-align:right;">Pres: ${fmt(f.pres||0)}</span>
       <div class="fijo-pagado"><input type="checkbox" ${f.pagado?'checked':''} onchange="updateFijoPagado('${f.id}',this.checked)"></div>
+      <button class="btn-ghost" onclick="eliminarFijo('${f.id}')" style="padding:4px 7px;font-size:11px;">✕</button>
     </div>`).join('');
 }
 
@@ -787,6 +793,14 @@ async function updateFijoPagado(id,pagado){
   await sb.from('presupuesto_fijos').update({pagado}).eq('id',id);
   const f=estado.fijos.find(f=>f.id===id);if(f)f.pagado=pagado;
   setSyncing(false);renderResumen();
+}
+
+async function eliminarFijo(id){
+  if(!confirm('¿Eliminar este gasto fijo?'))return;
+  setSyncing(true);
+  await sb.from('presupuesto_fijos').delete().eq('id',id);
+  estado.fijos=estado.fijos.filter(f=>f.id!==id);
+  setSyncing(false);renderFijos();renderResumen();showToast('Fijo eliminado');
 }
 
 function toggleFormFijo(){
