@@ -24,6 +24,8 @@
 body.tema-oceano{--bg:#EFF6FF;--surface:#FFF;--surface2:#DBEAFE;--ink:#1E3A5F;--ink2:#3B6494;--ink3:#93BBDE;--accent:#1D4ED8;--accent-light:#DBEAFE;--header-bg:#1E40AF;--nav-active:#1D4ED8;--border:#BFDBFE;}
 body.tema-bosque{--bg:#F0FDF4;--surface:#FFF;--surface2:#DCFCE7;--ink:#14532D;--ink2:#166534;--ink3:#86EFAC;--accent:#15803D;--accent-light:#DCFCE7;--header-bg:#166534;--nav-active:#15803D;--border:#BBF7D0;}
 body.tema-marina{--bg:#ECFEFF;--surface:#FFF;--surface2:#CFFAFE;--ink:#164E63;--ink2:#0E7490;--ink3:#67E8F9;--accent:#0891B2;--accent-light:#CFFAFE;--header-bg:#0E7490;--nav-active:#0891B2;--border:#A5F3FC;}
+body.tema-pizarra{--bg:#F0F0FF;--surface:#FFF;--surface2:#E0E7FF;--ink:#1E1B4B;--ink2:#3730A3;--ink3:#818CF8;--accent:#4338CA;--accent-light:#E0E7FF;--header-bg:#312E81;--nav-active:#4338CA;--border:#C7D2FE;}
+body.tema-laguna{--bg:#F0FAFA;--surface:#FFF;--surface2:#B2E8E8;--ink:#0A3D3D;--ink2:#0D6B6B;--ink3:#5AABAB;--accent:#0D6B6B;--accent-light:#CCEFEF;--header-bg:#0D6B6B;--nav-active:#0D6B6B;--border:#B2E8E8;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;font-size:14px;}
 
@@ -408,11 +410,6 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
       <div class="card">
         <div class="card-title">Tema de color</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div class="tema-card" id="tc-clasico" onclick="aplicarTema('clasico')">
-            <div class="tema-preview" style="background:#18181B;display:flex;"><div style="background:#F7F6F3;flex:1;display:flex;align-items:center;padding:0 14px;"><div style="width:50%;height:5px;border-radius:2px;background:#2563EB;"></div></div></div>
-            <div class="tema-info"><span class="tema-nombre">Clásico</span><span class="tema-desc-sm">Gris mineral</span></div>
-            <div class="tema-check" id="chk-clasico">✓</div>
-          </div>
           <div class="tema-card" id="tc-oceano" onclick="aplicarTema('oceano')">
             <div class="tema-preview" style="background:#1E40AF;display:flex;"><div style="background:#EFF6FF;flex:1;display:flex;align-items:center;padding:0 14px;"><div style="width:50%;height:5px;border-radius:2px;background:#1D4ED8;"></div></div></div>
             <div class="tema-info"><span class="tema-nombre">Océano</span><span class="tema-desc-sm">Azul profundo</span></div>
@@ -427,6 +424,16 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
             <div class="tema-preview" style="background:#0E7490;display:flex;"><div style="background:#ECFEFF;flex:1;display:flex;align-items:center;padding:0 14px;"><div style="width:50%;height:5px;border-radius:2px;background:#0891B2;"></div></div></div>
             <div class="tema-info"><span class="tema-nombre">Noche marina</span><span class="tema-desc-sm">Teal elegante</span></div>
             <div class="tema-check" id="chk-marina"></div>
+          </div>
+          <div class="tema-card" id="tc-pizarra" onclick="aplicarTema('pizarra')">
+            <div class="tema-preview" style="background:#312E81;display:flex;"><div style="background:#F0F0FF;flex:1;display:flex;align-items:center;padding:0 14px;"><div style="width:50%;height:5px;border-radius:2px;background:#4338CA;"></div></div></div>
+            <div class="tema-info"><span class="tema-nombre">Pizarra</span><span class="tema-desc-sm">Índigo oscuro</span></div>
+            <div class="tema-check" id="chk-pizarra"></div>
+          </div>
+          <div class="tema-card" id="tc-laguna" onclick="aplicarTema('laguna')">
+            <div class="tema-preview" style="background:#0D6B6B;display:flex;"><div style="background:#F0FAFA;flex:1;display:flex;align-items:center;padding:0 14px;"><div style="width:50%;height:5px;border-radius:2px;background:#0D6B6B;"></div></div></div>
+            <div class="tema-info"><span class="tema-nombre">Laguna</span><span class="tema-desc-sm">Azul-verde fresco</span></div>
+            <div class="tema-check" id="chk-laguna"></div>
           </div>
         </div>
       </div>
@@ -993,9 +1000,9 @@ async function importarJSON(event){
 }
 
 // ── TEMAS ─────────────────────────────────────────────────────────
-const TEMAS=['clasico','oceano','bosque','marina'];
+const TEMAS=['oceano','bosque','marina','pizarra','laguna'];
 function aplicarTema(tema){
-  document.body.className=tema==='clasico'?'':`tema-${tema}`;
+  document.body.className=`tema-${tema}`;
   localStorage.setItem('coicitos_tema',tema);
   TEMAS.forEach(t=>{
     const c=document.getElementById(`tc-${t}`),k=document.getElementById(`chk-${t}`);
@@ -1003,7 +1010,7 @@ function aplicarTema(tema){
   });
   showToast('Tema aplicado');
 }
-function initTema(){aplicarTema(localStorage.getItem('coicitos_tema')||'clasico');}
+function initTema(){aplicarTema(localStorage.getItem('coicitos_tema')||'pizarra');}
 
 // ── NAV ─────────────────────────────────────────────────────────
 function showTab(name,btn){
