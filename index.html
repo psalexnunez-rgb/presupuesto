@@ -100,9 +100,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
 
 /* ── FORM ─────── */
 .gasto-form{display:grid;gap:12px;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0;}
+.form-group{min-width:0;}
 .form-group label{display:block;font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}
-.form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);}
+.form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);box-sizing:border-box;-webkit-appearance:none;appearance:none;}
+.form-group input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
 .btn-primary{background:var(--accent);color:white;border:none;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s;width:100%;}
 .btn-primary:hover{opacity:.88;} .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
