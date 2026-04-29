@@ -257,6 +257,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <!-- RESUMEN MENSUAL -->
     <div id="tab-resumen" class="tab-content">
       <div id="resumen-anterior"></div>
+      <div id="alerta-presupuesto" style="display:none;background:var(--red-light);border:1px solid #FECACA;border-radius:10px;padding:14px 16px;margin-bottom:16px;color:var(--red);"></div>
       <div class="card">
         <div class="card-title">Mes actual <span id="res-mes-label"></span></div>
         <div class="kpi-grid">
@@ -363,7 +364,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 110px 110px 56px 36px;gap:8px;padding:0 12px 8px;font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">
-          <span>Concepto</span><span style="text-align:right;">Actual</span><span class="fijo-pres" style="text-align:right;">Presup.</span><span style="text-align:center;">Pagado</span><span></span>
+          <span>Concepto</span><span style="text-align:right;">Actual</span><span class="fijo-pres" style="text-align:right;">Presup. ✏️</span><span style="text-align:center;">✓</span><span></span>
         </div>
         <div id="fijos-list"></div>
         <div class="total-row">
@@ -615,18 +616,51 @@ function renderResumen(){
   de.textContent=fmt(disponible);de.className='kpi-val '+(disponible>=0?'pos':'neg');
   document.getElementById('res-fijos').textContent=fmt(totalFijosPag);
 
-  // Por categoría
-  const cats={};
+  // Por categoría — con presupuesto fijo asignado, porcentaje y alerta 90%
+  const catGasto={};  // gasto real por cat
+  const catPres={};   // presupuesto por cat (de fijos)
   [...estado.variables,...estado.fijos.map(f=>({...f,monto:f.actual||0}))].forEach(g=>{
-    const c=g.cat||'Otros';cats[c]=(cats[c]||0)+(g.monto||0);
+    const c=g.cat||'Otros';catGasto[c]=(catGasto[c]||0)+(g.monto||0);
   });
-  const maxC=Math.max(...Object.values(cats),1);
+  estado.fijos.forEach(f=>{
+    const c=f.cat||'Otros';catPres[c]=(catPres[c]||0)+(f.pres||0);
+  });
+  const allCats=new Set([...Object.keys(catGasto),...Object.keys(catPres)]);
+  const alertas=[];
   const cc=document.getElementById('cats-container');
-  cc.innerHTML=Object.keys(cats).length===0?'<div class="empty"><div class="empty-icon">📂</div>Sin gastos aún</div>':
-    Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>{
-      const p=Math.round(v/maxC*100);
-      return `<div class="prog-row"><div class="prog-label"><span class="prog-name"><span class="cat-badge cat-${c}">${c}</span></span><span class="prog-meta">${fmt(v)}</span></div><div class="prog-track"><div class="prog-fill fill-accent" style="width:${p}%"></div></div></div>`;
+  if(allCats.size===0){cc.innerHTML='<div class="empty"><div class="empty-icon">📂</div>Sin gastos aún</div>';}
+  else{
+    const rows=[...allCats].map(c=>({c,g:catGasto[c]||0,p:catPres[c]||0})).sort((a,b)=>b.g-a.g);
+    cc.innerHTML=rows.map(({c,g,p})=>{
+      const pct=p>0?Math.min(Math.round(g/p*100),999):0;
+      const color=pct>=100?'fill-red':pct>=90?'fill-orange':'fill-green';
+      const barW=p>0?Math.min(pct,100):0;
+      const pctLabel=p>0?`${pct}% de ${fmt(p)}`:'sin presupuesto';
+      if(pct>=90&&p>0)alertas.push({c,pct,g,p});
+      return `<div class="prog-row">
+        <div class="prog-label">
+          <span class="prog-name"><span class="cat-badge cat-${c}">${c}</span>${pct>=90&&p>0?'<span style="color:var(--red);font-size:11px;margin-left:4px;">⚠️</span>':''}</span>
+          <span class="prog-meta">${fmt(g)} <span style="color:var(--ink3);font-size:11px;">— ${pctLabel}</span></span>
+        </div>
+        <div class="prog-track"><div class="prog-fill ${color}" style="width:${barW}%"></div></div>
+      </div>`;
     }).join('');
+  }
+
+  // Alertas 90% — banner visible si hay categorías en zona roja
+  const alertBox=document.getElementById('alerta-presupuesto');
+  if(alertas.length>0){
+    alertBox.style.display='block';
+    alertBox.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:20px;">⚠️</span>
+      <div>
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Atención — ${alertas.length} categoría${alertas.length>1?'s':''} sobre el 90% del presupuesto</div>
+        ${alertas.map(a=>`<div style="font-size:12px;color:var(--ink2);">${a.c}: <strong>${fmt(a.g)}</strong> de ${fmt(a.p)} (${a.pct}%)</div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    alertBox.style.display='none';
+  }
 
   // Últimos gastos
   const ult=[...estado.variables].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,8);
@@ -734,8 +768,8 @@ function renderFijos(){
   document.getElementById('fijos-list').innerHTML=estado.fijos.map(f=>`
     <div class="fijo-item">
       <span style="font-weight:500;">${f.nombre} <span class="cat-badge cat-${f.cat||'Otros'}" style="margin-left:4px;">${f.cat||''}</span></span>
-      <input class="fijo-input" type="number" value="${f.actual||0}" onchange="updateFijo('${f.id}',this.value)">
-      <span class="fijo-pres" style="font-size:11px;color:var(--ink3);text-align:right;">Pres: ${fmt(f.pres||0)}</span>
+      <input class="fijo-input" type="number" value="${f.actual||0}" onchange="updateFijo('${f.id}',this.value)" placeholder="actual">
+      <input class="fijo-input fijo-pres" type="number" value="${f.pres||0}" onchange="updateFijoPres('${f.id}',this.value)" placeholder="presup." style="color:var(--ink3);">
       <div class="fijo-pagado"><input type="checkbox" ${f.pagado?'checked':''} onchange="updateFijoPagado('${f.id}',this.checked)"></div>
       <button class="btn-ghost" onclick="eliminarFijo('${f.id}')" style="padding:4px 7px;font-size:11px;">✕</button>
     </div>`).join('');
@@ -746,9 +780,9 @@ function renderIngresos(){
   document.getElementById('ingresos-total').textContent=fmt(total);
   document.getElementById('ingresos-list').innerHTML=estado.ingresos.map(ing=>`
     <div class="ingreso-item">
-      <span style="font-weight:500;font-size:13px;">${ing.nombre}</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <input type="number" value="${ing.monto||0}" style="width:130px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:right;background:var(--bg);font-family:'Inter',sans-serif;" onchange="updateIngreso('${ing.id}',this.value)">
+      <input type="text" value="${ing.nombre||''}" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:500;background:var(--bg);font-family:'Inter',sans-serif;color:var(--ink);margin-right:8px;" onchange="updateIngresoNombre('${ing.id}',this.value)" placeholder="Nombre">
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <input type="number" value="${ing.monto||0}" style="width:120px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:right;background:var(--bg);font-family:'Inter',sans-serif;color:var(--ink);" onchange="updateIngreso('${ing.id}',this.value)">
         <button class="btn-ghost" onclick="eliminarIngreso('${ing.id}')">✕</button>
       </div>
     </div>`).join('');
@@ -826,6 +860,20 @@ async function agregarFijo(){
   const {data,error}=await sb.from('presupuesto_fijos').insert([{user_id:userId,anio:anioActual,mes:mesActual,nombre,pres,cat,actual:0,pagado:false}]).select().single();
   if(!error){estado.fijos.push(data);document.getElementById('nf-nombre').value='';document.getElementById('nf-pres').value='';showToast('✓ Fijo agregado');}
   setSyncing(false);renderFijos();renderResumen();toggleFormFijo();
+}
+
+async function updateFijoPres(id,val){
+  const pres=parseFloat(val)||0;setSyncing(true);
+  await sb.from('presupuesto_fijos').update({pres}).eq('id',id);
+  const f=estado.fijos.find(f=>f.id===id);if(f)f.pres=pres;
+  setSyncing(false);renderFijos();renderResumen();
+}
+
+async function updateIngresoNombre(id,val){
+  const nombre=val.trim();if(!nombre)return;setSyncing(true);
+  await sb.from('presupuesto_ingresos').update({nombre}).eq('id',id);
+  const i=estado.ingresos.find(i=>i.id===id);if(i)i.nombre=nombre;
+  setSyncing(false);
 }
 
 async function updateIngreso(id,val){
