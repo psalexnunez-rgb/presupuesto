@@ -267,6 +267,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
           <div class="kpi"><div class="kpi-label">Gastado</div><div class="kpi-val" id="res-gastado">$0</div></div>
           <div class="kpi"><div class="kpi-label">Disponible</div><div class="kpi-val" id="res-disponible">$0</div></div>
           <div class="kpi"><div class="kpi-label">Fijos pagados</div><div class="kpi-val" id="res-fijos">$0</div></div>
+          <div class="kpi"><div class="kpi-label">Total presupuestado</div><div class="kpi-val" id="res-presupuestado">$0</div><div class="kpi-sub" id="res-presupuestado-sub"></div></div>
         </div>
         <div class="section-label">Gastos por categoría</div>
         <div id="cats-container"></div>
@@ -663,6 +664,17 @@ function renderResumen(){
   const de=document.getElementById('res-disponible');
   de.textContent=fmt(disponible);de.className='kpi-val '+(disponible>=0?'pos':'neg');
   document.getElementById('res-fijos').textContent=fmt(totalFijosPag);
+
+  // Total presupuestado = suma de fijos presupuestados + categorías variables
+  const totalPresFijos=estado.fijos.reduce((s,f)=>s+(f.pres||0),0);
+  const totalPresCats=estado.categorias.reduce((s,c)=>s+(c.presupuesto||0),0);
+  const totalPres=totalPresFijos+totalPresCats;
+  const pctGastado=totalPres>0?Math.round(totalGastado/totalPres*100):0;
+  const elPres=document.getElementById('res-presupuestado');
+  const elPresSub=document.getElementById('res-presupuestado-sub');
+  elPres.textContent=fmt(totalPres);
+  elPres.className='kpi-val '+(pctGastado>=100?'neg':pctGastado>=90?'':'acc');
+  if(elPresSub)elPresSub.textContent=totalPres>0?`${pctGastado}% utilizado`:'';
 
   // Por categoría — presupuesto de fijos + presupuesto de tabla categorias
   const catGasto={};
