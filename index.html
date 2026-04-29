@@ -248,6 +248,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <button class="nav-btn" onclick="showTab('resumen',this)">Resumen</button>
     <button class="nav-btn" onclick="showTab('anual',this)">Anual</button>
     <button class="nav-btn" onclick="showTab('fijos',this)">Fijos</button>
+    <button class="nav-btn" onclick="showTab('categorias',this)">Categorías</button>
     <button class="nav-btn" onclick="showTab('ingresos',this)">Ingresos</button>
     <button class="nav-btn" onclick="showTab('historial',this)">Historial</button>
     <button class="nav-btn" onclick="showTab('config',this)">Config</button>
@@ -341,7 +342,16 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <div id="tab-fijos" class="tab-content">
       <div class="card">
         <div class="card-title">Gastos fijos del mes
-          <button class="btn-outline" onclick="toggleFormFijo()" style="font-size:11px;padding:5px 12px;">+ Añadir fijo</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="fijos-orden" onchange="renderFijos()" style="font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;cursor:pointer;">
+              <option value="original">Orden original</option>
+              <option value="az">Concepto A→Z</option>
+              <option value="za">Concepto Z→A</option>
+              <option value="mayor">Mayor presup.</option>
+              <option value="menor">Menor presup.</option>
+            </select>
+            <button class="btn-outline" onclick="toggleFormFijo()" style="font-size:11px;padding:5px 12px;">+ Añadir</button>
+          </div>
         </div>
         <div id="form-fijo-wrap" style="display:none;margin-bottom:16px;padding:16px;background:var(--surface2);border-radius:9px;">
           <div class="section-label" style="margin-bottom:10px;">Nuevo gasto fijo</div>
@@ -371,6 +381,39 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
         <div class="total-row">
           <span class="total-label">Total presupuestado</span>
           <span class="total-val acc" id="fijos-total-pres"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORÍAS -->
+    <div id="tab-categorias" class="tab-content">
+      <div class="card">
+        <div class="card-title">Presupuesto por categoría variable
+          <span style="font-size:11px;color:var(--ink3);">Define cuánto destinas mensualmente</span>
+        </div>
+        <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;">
+          Aquí defines el presupuesto mensual para categorías como Alimentación, Salud, Transporte, etc. 
+          Cada gasto variable que registres se irá acumulando y verás el % consumido en el Resumen.
+        </p>
+        <div id="cats-pres-list"></div>
+        <div class="divider"></div>
+        <div class="section-label" style="margin-bottom:10px;">Agregar presupuesto de categoría</div>
+        <div class="gasto-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select id="cp-cat">
+                <option value="">-- Seleccionar --</option>
+                <option>Alimentación</option><option>Salud</option><option>Transporte</option>
+                <option>Vestuario</option><option>Educación</option><option>Otros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Presupuesto mensual ($)</label>
+              <input type="number" id="cp-monto" placeholder="0" min="0">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="agregarCatPres()">Guardar presupuesto</button>
         </div>
       </div>
     </div>
@@ -509,7 +552,7 @@ const INGRESOS_BASE=[
 ];
 
 let mesActual=new Date().getMonth(),anioActual=new Date().getFullYear();
-let userId=null,estado={ingresos:[],fijos:[],variables:[]};
+let userId=null,estado={ingresos:[],fijos:[],variables:[],categorias:[]};
 let filtroActivo='Todos';
 
 // ── AUTH ─────────────────────────────────────────────────────────
@@ -565,14 +608,16 @@ function setSyncing(b){
 
 async function cargarMes(){
   setSyncing(true);
-  const [ing,fij,vari]=await Promise.all([
+  const [ing,fij,vari,cats]=await Promise.all([
     sb.from('presupuesto_ingresos').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
     sb.from('presupuesto_fijos').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
     sb.from('presupuesto_variables').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
+    sb.from('presupuesto_categorias').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
   ]);
   estado.ingresos=ing.data||[];
   estado.fijos=fij.data||[];
   estado.variables=vari.data||[];
+  estado.categorias=cats.data||[];
   if(estado.ingresos.length===0)await initMesBase();
   setSyncing(false);
   iniciarRealtime();
@@ -596,7 +641,7 @@ function cambiarMes(){
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────
-function renderAll(){renderResumen();renderFijos();renderIngresos();renderHistorial();}
+function renderAll(){renderResumen();renderFijos();renderIngresos();renderHistorial();renderCategorias();}
 
 function fmt(n){return '$'+Math.round(n||0).toLocaleString('es-CL');}
 function pct(a,b){return b>0?Math.min(Math.round(a/b*100),100):0;}
@@ -619,14 +664,19 @@ function renderResumen(){
   de.textContent=fmt(disponible);de.className='kpi-val '+(disponible>=0?'pos':'neg');
   document.getElementById('res-fijos').textContent=fmt(totalFijosPag);
 
-  // Por categoría — con presupuesto fijo asignado, porcentaje y alerta 90%
-  const catGasto={};  // gasto real por cat
-  const catPres={};   // presupuesto por cat (de fijos)
+  // Por categoría — presupuesto de fijos + presupuesto de tabla categorias
+  const catGasto={};
+  const catPres={};
   [...estado.variables,...estado.fijos.map(f=>({...f,monto:f.actual||0}))].forEach(g=>{
     const c=g.cat||'Otros';catGasto[c]=(catGasto[c]||0)+(g.monto||0);
   });
+  // Presupuesto desde fijos (por categoría)
   estado.fijos.forEach(f=>{
     const c=f.cat||'Otros';catPres[c]=(catPres[c]||0)+(f.pres||0);
+  });
+  // Presupuesto desde tabla categorias (variables presupuestadas)
+  estado.categorias.forEach(c=>{
+    catPres[c.categoria]=(catPres[c.categoria]||0)+(c.presupuesto||0);
   });
   const allCats=new Set([...Object.keys(catGasto),...Object.keys(catPres)]);
   const alertas=[];
@@ -771,7 +821,15 @@ function gastoHTML(g){
 function renderFijos(){
   const total=estado.fijos.reduce((s,f)=>s+(f.pres||0),0);
   document.getElementById('fijos-total-pres').textContent=fmt(total);
-  document.getElementById('fijos-list').innerHTML=estado.fijos.map(f=>`
+
+  const orden=document.getElementById('fijos-orden')?.value||'original';
+  let fijos=[...estado.fijos];
+  if(orden==='az') fijos.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  else if(orden==='za') fijos.sort((a,b)=>b.nombre.localeCompare(a.nombre,'es'));
+  else if(orden==='mayor') fijos.sort((a,b)=>(b.pres||0)-(a.pres||0));
+  else if(orden==='menor') fijos.sort((a,b)=>(a.pres||0)-(b.pres||0));
+
+  document.getElementById('fijos-list').innerHTML=fijos.map(f=>`
     <div class="fijo-item">
       <span style="font-weight:500;">${f.nombre} <span class="cat-badge cat-${f.cat||'Otros'}" style="margin-left:4px;">${f.cat||''}</span></span>
       <input class="fijo-input" type="number" value="${f.actual||0}" onchange="updateFijo('${f.id}',this.value)" placeholder="actual">
@@ -914,10 +972,16 @@ async function copiarAlSiguiente(){
   await Promise.all([
     sb.from('presupuesto_ingresos').delete().eq('user_id',userId).eq('anio',na).eq('mes',nm),
     sb.from('presupuesto_fijos').delete().eq('user_id',userId).eq('anio',na).eq('mes',nm),
+    sb.from('presupuesto_categorias').delete().eq('user_id',userId).eq('anio',na).eq('mes',nm),
   ]);
   const ing=estado.ingresos.map(i=>({nombre:i.nombre,monto:i.monto,user_id:userId,anio:na,mes:nm}));
   const fij=estado.fijos.map(f=>({nombre:f.nombre,pres:f.pres,cat:f.cat,actual:0,pagado:false,user_id:userId,anio:na,mes:nm}));
-  await Promise.all([sb.from('presupuesto_ingresos').insert(ing),sb.from('presupuesto_fijos').insert(fij)]);
+  const cats=estado.categorias.map(c=>({categoria:c.categoria,presupuesto:c.presupuesto,user_id:userId,anio:na,mes:nm}));
+  await Promise.all([
+    sb.from('presupuesto_ingresos').insert(ing),
+    sb.from('presupuesto_fijos').insert(fij),
+    sb.from('presupuesto_categorias').insert(cats),
+  ]);
   setSyncing(false);showToast(`✓ Estructura copiada a ${MESES[nm]} ${na}`);
 }
 
@@ -1053,7 +1117,80 @@ async function importarJSON(event){
   reader.readAsText(file);
 }
 
-// ── REALTIME SYNC ────────────────────────────────────────────────
+// ── CATEGORÍAS VARIABLES ─────────────────────────────────────────
+function renderCategorias(){
+  const list=document.getElementById('cats-pres-list');
+  if(!list)return;
+  if(estado.categorias.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📊</div>Sin presupuestos de categoría definidos aún</div>';
+    return;
+  }
+  // Cruzar con gasto real
+  const catGasto={};
+  estado.variables.forEach(g=>{const c=g.cat||'Otros';catGasto[c]=(catGasto[c]||0)+(g.monto||0);});
+
+  list.innerHTML=estado.categorias.map(cp=>{
+    const gastado=catGasto[cp.categoria]||0;
+    const pct=cp.presupuesto>0?Math.min(Math.round(gastado/cp.presupuesto*100),999):0;
+    const color=pct>=100?'fill-red':pct>=90?'fill-orange':'fill-green';
+    const barW=Math.min(pct,100);
+    return `<div style="padding:12px;background:var(--surface2);border-radius:9px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <span class="cat-badge cat-${cp.categoria}" style="font-size:12px;padding:3px 9px;">${cp.categoria}</span>
+        </div>
+        <div style="text-align:right;display:flex;align-items:center;gap:8px;">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:14px;">${fmt(gastado)}</div>
+            <div style="font-size:11px;color:var(--ink3);">de ${fmt(cp.presupuesto)} · ${pct}%</div>
+          </div>
+          <button class="btn-ghost" onclick="eliminarCatPres('${cp.id}')" style="padding:4px 7px;font-size:11px;">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="prog-track" style="flex:1;"><div class="prog-fill ${color}" style="width:${barW}%;"></div></div>
+        <div style="font-size:11px;min-width:50px;text-align:right;">
+          <input type="number" value="${cp.presupuesto}" style="width:90px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:11px;text-align:right;background:var(--bg);font-family:'Inter',sans-serif;" onchange="updateCatPres('${cp.id}',this.value)">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function agregarCatPres(){
+  const cat=document.getElementById('cp-cat').value;
+  const presupuesto=parseFloat(document.getElementById('cp-monto').value)||0;
+  if(!cat){showToast('Selecciona una categoría');return;}
+  // Si ya existe esa categoría, actualizar en lugar de duplicar
+  const existe=estado.categorias.find(c=>c.categoria===cat);
+  setSyncing(true);
+  if(existe){
+    await sb.from('presupuesto_categorias').update({presupuesto}).eq('id',existe.id);
+    existe.presupuesto=presupuesto;
+    showToast('✓ Presupuesto actualizado');
+  } else {
+    const {data,error}=await sb.from('presupuesto_categorias')
+      .insert([{user_id:userId,anio:anioActual,mes:mesActual,categoria:cat,presupuesto}]).select().single();
+    if(!error){estado.categorias.push(data);showToast('✓ Presupuesto guardado');}
+  }
+  document.getElementById('cp-cat').value='';
+  document.getElementById('cp-monto').value='';
+  setSyncing(false);renderCategorias();renderResumen();
+}
+
+async function updateCatPres(id,val){
+  const presupuesto=parseFloat(val)||0;setSyncing(true);
+  await sb.from('presupuesto_categorias').update({presupuesto}).eq('id',id);
+  const c=estado.categorias.find(c=>c.id===id);if(c)c.presupuesto=presupuesto;
+  setSyncing(false);renderResumen();
+}
+
+async function eliminarCatPres(id){
+  setSyncing(true);
+  await sb.from('presupuesto_categorias').delete().eq('id',id);
+  estado.categorias=estado.categorias.filter(c=>c.id!==id);
+  setSyncing(false);renderCategorias();renderResumen();showToast('Presupuesto eliminado');
+}
 let realtimeChannel = null;
 
 function iniciarRealtime() {
@@ -1075,7 +1212,7 @@ function iniciarRealtime() {
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
-      table: 'presupuesto_ingresos',
+      table: 'presupuesto_categorias',
       filter: `user_id=eq.${userId}`
     }, () => recargarSilencioso())
     .subscribe();
@@ -1091,14 +1228,16 @@ async function recargarSilencioso() {
     if (dot) { dot.className = 'sync-dot spin'; }
     if (txt) txt.textContent = 'Sync...';
 
-    const [ing, fij, vari] = await Promise.all([
+    const [ing, fij, vari, cats] = await Promise.all([
       sb.from('presupuesto_ingresos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
       sb.from('presupuesto_fijos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
       sb.from('presupuesto_variables').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+      sb.from('presupuesto_categorias').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
     ]);
     estado.ingresos = ing.data || [];
     estado.fijos = fij.data || [];
     estado.variables = vari.data || [];
+    estado.categorias = cats.data || [];
 
     if (dot) dot.className = 'sync-dot';
     if (txt) txt.textContent = 'Guardado';
@@ -1111,14 +1250,16 @@ async function recargarManual() {
   await recargarSilencioso();
   clearTimeout(recargarTimeout);
   // Forzar inmediato
-  const [ing, fij, vari] = await Promise.all([
+  const [ing, fij, vari, cats] = await Promise.all([
     sb.from('presupuesto_ingresos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
     sb.from('presupuesto_fijos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
     sb.from('presupuesto_variables').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+    sb.from('presupuesto_categorias').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
   ]);
   estado.ingresos = ing.data || [];
   estado.fijos = fij.data || [];
   estado.variables = vari.data || [];
+  estado.categorias = cats.data || [];
   renderAll();
   showToast('✓ Datos actualizados');
 }
