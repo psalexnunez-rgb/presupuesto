@@ -238,6 +238,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
         </select>
       </div>
       <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt" class="sync-txt-label">Guardado</span></div>
+      <button class="btn-header" onclick="recargarManual()" title="Sincronizar" style="font-size:15px;padding:4px 10px;">↻</button>
       <button class="btn-header" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -573,7 +574,9 @@ async function cargarMes(){
   estado.fijos=fij.data||[];
   estado.variables=vari.data||[];
   if(estado.ingresos.length===0)await initMesBase();
-  setSyncing(false);renderAll();
+  setSyncing(false);
+  iniciarRealtime();
+  renderAll();
 }
 
 async function initMesBase(){
@@ -589,7 +592,7 @@ async function initMesBase(){
 function cambiarMes(){
   mesActual=parseInt(document.getElementById('mesSelect').value);
   anioActual=parseInt(document.getElementById('anioSelect').value);
-  cargarMes();
+  cargarMes(); // cargarMes ya llama iniciarRealtime internamente
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────
@@ -1050,7 +1053,75 @@ async function importarJSON(event){
   reader.readAsText(file);
 }
 
-// ── TEMAS ─────────────────────────────────────────────────────────
+// ── REALTIME SYNC ────────────────────────────────────────────────
+let realtimeChannel = null;
+
+function iniciarRealtime() {
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+
+  realtimeChannel = sb.channel(`presupuesto_${userId}_${anioActual}_${mesActual}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'presupuesto_variables',
+      filter: `user_id=eq.${userId}`
+    }, () => recargarSilencioso())
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'presupuesto_fijos',
+      filter: `user_id=eq.${userId}`
+    }, () => recargarSilencioso())
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'presupuesto_ingresos',
+      filter: `user_id=eq.${userId}`
+    }, () => recargarSilencioso())
+    .subscribe();
+}
+
+let recargarTimeout = null;
+async function recargarSilencioso() {
+  // Debounce — espera 800ms antes de recargar para agrupar cambios rápidos
+  clearTimeout(recargarTimeout);
+  recargarTimeout = setTimeout(async () => {
+    const dot = document.getElementById('sync-dot');
+    const txt = document.getElementById('sync-txt');
+    if (dot) { dot.className = 'sync-dot spin'; }
+    if (txt) txt.textContent = 'Sync...';
+
+    const [ing, fij, vari] = await Promise.all([
+      sb.from('presupuesto_ingresos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+      sb.from('presupuesto_fijos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+      sb.from('presupuesto_variables').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+    ]);
+    estado.ingresos = ing.data || [];
+    estado.fijos = fij.data || [];
+    estado.variables = vari.data || [];
+
+    if (dot) dot.className = 'sync-dot';
+    if (txt) txt.textContent = 'Guardado';
+    renderAll();
+  }, 800);
+}
+
+async function recargarManual() {
+  showToast('Sincronizando...');
+  await recargarSilencioso();
+  clearTimeout(recargarTimeout);
+  // Forzar inmediato
+  const [ing, fij, vari] = await Promise.all([
+    sb.from('presupuesto_ingresos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+    sb.from('presupuesto_fijos').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+    sb.from('presupuesto_variables').select('*').eq('user_id', userId).eq('anio', anioActual).eq('mes', mesActual),
+  ]);
+  estado.ingresos = ing.data || [];
+  estado.fijos = fij.data || [];
+  estado.variables = vari.data || [];
+  renderAll();
+  showToast('✓ Datos actualizados');
+}
 const TEMAS=['oceano','bosque','marina','pizarra','laguna'];
 function aplicarTema(tema){
   document.body.className=`tema-${tema}`;
