@@ -238,6 +238,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
         </select>
       </div>
       <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt" class="sync-txt-label">Guardado</span></div>
+      <button class="btn-header" onclick="toggleMiserable()" title="Modo miserable" style="font-size:15px;padding:4px 8px;">😩</button>
       <button class="btn-header" onclick="recargarManual()" title="Sincronizar" style="font-size:15px;padding:4px 10px;">↻</button>
       <button class="btn-header" onclick="logout()">Salir</button>
     </div>
@@ -251,6 +252,9 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <button class="nav-btn" onclick="showTab('categorias',this)">Categorías</button>
     <button class="nav-btn" onclick="showTab('ingresos',this)">Ingresos</button>
     <button class="nav-btn" onclick="showTab('historial',this)">Historial</button>
+    <button class="nav-btn" onclick="showTab('comparador',this)">Comparar</button>
+    <button class="nav-btn" onclick="showTab('metas',this)">Metas</button>
+    <button class="nav-btn" onclick="showTab('wrapped',this)">Wrapped</button>
     <button class="nav-btn" onclick="showTab('config',this)">Config</button>
   </div>
 
@@ -269,6 +273,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
           <div class="kpi"><div class="kpi-label">Fijos pagados</div><div class="kpi-val" id="res-fijos">$0</div></div>
           <div class="kpi"><div class="kpi-label">Total presupuestado</div><div class="kpi-val" id="res-presupuestado">$0</div><div class="kpi-sub" id="res-presupuestado-sub"></div></div>
         </div>
+        <div id="proyeccion-container"></div>
         <div class="section-label">Gastos por categoría</div>
         <div id="cats-container"></div>
         <div class="divider"></div>
@@ -302,7 +307,14 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     <!-- GASTOS -->
     <div id="tab-gastos" class="tab-content active">
       <div class="card">
-        <div class="card-title">Registrar gasto variable</div>
+        <div class="card-title">Registrar gasto variable
+          <div style="display:flex;gap:6px;">
+            <button id="btn-voz" onclick="iniciarVoz()" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:'Inter',sans-serif;">🎤 Voz</button>
+            <label id="btn-foto-label" style="font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:'Inter',sans-serif;">📷 Boleta
+              <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="procesarFotoBoleta(event)">
+            </label>
+          </div>
+        </div>
         <div class="gasto-form">
           <div class="form-row">
             <div class="form-group">
@@ -485,6 +497,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
       </div>
 
       <div class="card">
+        <div class="card-title">Notificaciones</div>
+        <p style="font-size:12px;color:var(--ink2);margin-bottom:12px;">Recibe alertas cuando una categoría supere el 90% del presupuesto.</p>
+        <button class="btn-primary" onclick="solicitarNotificaciones()" style="background:var(--orange);">🔔 Activar notificaciones</button>
+      </div>
+      <div class="card">
         <div class="card-title">Exportar PDF del mes</div>
         <p style="font-size:12px;color:var(--ink2);margin-bottom:12px;">Genera un PDF con el resumen completo del mes seleccionado.</p>
         <button class="btn-primary" onclick="exportarPDF()">Descargar PDF</button>
@@ -511,6 +528,73 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
     </div>
   </div>
 </div>
+
+<!-- TABS NUEVOS insertados fuera del app-screen por espacio — los movemos adentro vía JS -->
+<!-- COMPARADOR -->
+<div id="tab-comparador" class="tab-content" style="display:none;">
+  <div class="card">
+    <div class="card-title">Comparar dos meses</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div class="form-group">
+        <label>Mes 1</label>
+        <select id="comp-mes1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
+          <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+        </select>
+        <select id="comp-anio1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
+          <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Mes 2</label>
+        <select id="comp-mes2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
+          <option value="0">Enero</option><option value="1" selected>Febrero</option><option value="2">Marzo</option>
+          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+        </select>
+        <select id="comp-anio2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
+          <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="renderComparador()">Comparar</button>
+    <div id="comparador-resultado" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- METAS -->
+<div id="tab-metas" class="tab-content" style="display:none;">
+  <div class="card">
+    <div class="card-title">Metas de ahorro 🎯</div>
+    <div id="metas-list"></div>
+    <div class="divider"></div>
+    <div class="section-label" style="margin-bottom:10px;">Nueva meta</div>
+    <div class="gasto-form">
+      <div class="form-row">
+        <div class="form-group"><label>Emoji</label><input type="text" id="meta-emoji" placeholder="🎯" maxlength="2" style="font-size:20px;text-align:center;"></div>
+        <div class="form-group"><label>Nombre</label><input type="text" id="meta-nombre" placeholder="Ej: Viaje a Europa"></div>
+      </div>
+      <div class="form-group"><label>Monto objetivo ($)</label><input type="number" id="meta-objetivo" placeholder="0"></div>
+      <button class="btn-primary" onclick="agregarMeta()">Crear meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRAPPED -->
+<div id="tab-wrapped" class="tab-content" style="display:none;">
+  <div class="card">
+    <div class="card-title">Tu año en números ✨</div>
+    <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;">Resumen financiero anual — todo lo que pasó con tus finanzas.</p>
+    <button class="btn-primary" onclick="generarWrapped()" style="margin-bottom:16px;">✨ Generar Wrapped</button>
+    <div id="wrapped-content"></div>
+  </div>
+</div>
+
+<!-- MODO MISERABLE -->
+<div id="modo-miserable-overlay" style="display:none;position:fixed;inset:0;background:#0A0A0A;z-index:500;align-items:center;justify-content:center;"></div>
 
 <div class="modal-overlay" id="modal-reset">
   <div class="modal">
@@ -642,7 +726,7 @@ function cambiarMes(){
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────
-function renderAll(){renderResumen();renderFijos();renderIngresos();renderHistorial();renderCategorias();}
+function renderAll(){renderResumen();renderFijos();renderIngresos();renderHistorial();renderCategorias();renderProyeccion();renderMetas();}
 
 function fmt(n){return '$'+Math.round(n||0).toLocaleString('es-CL');}
 function pct(a,b){return b>0?Math.min(Math.round(a/b*100),100):0;}
@@ -1289,12 +1373,514 @@ function initTema(){aplicarTema(localStorage.getItem('coicitos_tema')||'pizarra'
 
 // ── NAV ─────────────────────────────────────────────────────────
 function showTab(name,btn){
+  const main=document.querySelector('.main');
+  ['comparador','metas','wrapped'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el&&el.parentElement!==main)main.appendChild(el);
+  });
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
+  const tab=document.getElementById('tab-'+name);
+  if(tab)tab.classList.add('active');
   if(btn)btn.classList.add('active');
   if(name==='anual')renderAnual();
+  if(name==='metas')renderMetas();
 }
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 1: REGISTRO RÁPIDO POR VOZ
+// ══════════════════════════════════════════════════════════════
+let reconocimientoVoz = null;
+let grabandoVoz = false;
+
+function iniciarVoz() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { showToast('Tu navegador no soporta voz'); return; }
+
+  if (grabandoVoz) { pararVoz(); return; }
+
+  reconocimientoVoz = new SpeechRecognition();
+  reconocimientoVoz.lang = 'es-CL';
+  reconocimientoVoz.continuous = false;
+  reconocimientoVoz.interimResults = false;
+
+  reconocimientoVoz.onstart = () => {
+    grabandoVoz = true;
+    const btn = document.getElementById('btn-voz');
+    if (btn) { btn.textContent = '🔴 Escuchando...'; btn.style.background = 'var(--red)'; }
+  };
+
+  reconocimientoVoz.onresult = (e) => {
+    const texto = e.results[0][0].transcript.toLowerCase();
+    procesarVoz(texto);
+  };
+
+  reconocimientoVoz.onerror = () => { pararVoz(); showToast('No pude escuchar. Intenta de nuevo'); };
+  reconocimientoVoz.onend = () => pararVoz();
+  reconocimientoVoz.start();
+}
+
+function pararVoz() {
+  grabandoVoz = false;
+  const btn = document.getElementById('btn-voz');
+  if (btn) { btn.textContent = '🎤 Voz'; btn.style.background = ''; }
+  if (reconocimientoVoz) reconocimientoVoz.stop();
+}
+
+function procesarVoz(texto) {
+  showToast(`Escuché: "${texto}"`);
+  // Extraer monto — busca números
+  const montoMatch = texto.match(/(\d[\d\.]*)\s*(mil|millones?)?/);
+  let monto = 0;
+  if (montoMatch) {
+    monto = parseFloat(montoMatch[1].replace('.',''));
+    if (montoMatch[2]?.includes('mil')) monto *= 1000;
+    if (montoMatch[2]?.includes('millon')) monto *= 1000000;
+  }
+
+  // Detectar tipo
+  const tipos = {
+    'supermercado': 'Supermercado 1', 'jumbo': 'Supermercado 1', 'lider': 'Supermercado 2',
+    'santa isabel': 'Supermercado 3', 'unimarc': 'Supermercado 4',
+    'bencina': 'Bencina/Transporte', 'farmacia': 'Farmacia', 'medico': 'Medicos + Procedimientos',
+    'ropa': 'Ropa Mandi', 'ocio': 'Ocio', 'restaurant': 'Ocio', 'comida': 'Supermercado 1'
+  };
+  let tipo = 'Otro';
+  for (const [key, val] of Object.entries(tipos)) {
+    if (texto.includes(key)) { tipo = val; break; }
+  }
+
+  // Detectar categoría
+  const cats = {
+    'alimentación': 'Alimentación', 'alimento': 'Alimentación', 'comida': 'Alimentación',
+    'supermercado': 'Alimentación', 'salud': 'Salud', 'farmacia': 'Salud', 'medico': 'Salud',
+    'bencina': 'Transporte', 'transporte': 'Transporte', 'ropa': 'Vestuario',
+    'ocio': 'Otros', 'restaurant': 'Otros'
+  };
+  let cat = 'Otros';
+  for (const [key, val] of Object.entries(cats)) {
+    if (texto.includes(key)) { cat = val; break; }
+  }
+
+  // Rellenar formulario
+  if (monto > 0) document.getElementById('g-monto').value = monto;
+  if (tipo) { const sel = document.getElementById('g-tipo'); for (let o of sel.options) { if (o.value === tipo) { sel.value = tipo; break; } } }
+  if (cat) { const sel = document.getElementById('g-cat'); for (let o of sel.options) { if (o.value === cat) { sel.value = cat; break; } } }
+
+  // Fecha hoy
+  document.getElementById('g-fecha').value = new Date().toISOString().split('T')[0];
+
+  if (monto > 0) showToast(`✓ Monto: ${fmt(monto)} · ${tipo} · ${cat}`);
+  else showToast('No detecté monto. Revisa el formulario');
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 3: FOTO DE BOLETA CON IA
+// ══════════════════════════════════════════════════════════════
+async function procesarFotoBoleta(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('btn-foto-label');
+  if (btn) btn.textContent = '🔄 Analizando...';
+
+  const base64 = await new Promise((res) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result.split(',')[1]);
+    reader.readAsDataURL(file);
+  });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } },
+            { type: 'text', text: 'Analiza esta boleta o ticket de compra y extrae: 1) monto total en pesos chilenos (solo número sin puntos ni $), 2) tipo de establecimiento (supermercado/farmacia/restaurant/otro), 3) categoría más probable (Alimentación/Salud/Transporte/Vestuario/Otros). Responde SOLO en JSON: {"monto":0,"tipo":"","categoria":""}' }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const texto = data.content[0].text;
+    const json = JSON.parse(texto.replace(/```json|```/g,'').trim());
+
+    if (json.monto) document.getElementById('g-monto').value = json.monto;
+    document.getElementById('g-fecha').value = new Date().toISOString().split('T')[0];
+
+    const tipoMap = { supermercado: 'Supermercado 1', farmacia: 'Farmacia', restaurant: 'Ocio' };
+    const tipo = tipoMap[json.tipo?.toLowerCase()] || 'Otro';
+    const sel = document.getElementById('g-tipo');
+    for (let o of sel.options) { if (o.value === tipo) { sel.value = tipo; break; } }
+    const selCat = document.getElementById('g-cat');
+    for (let o of selCat.options) { if (o.value === json.categoria) { selCat.value = json.categoria; break; } }
+
+    showToast(`✓ Boleta: ${fmt(json.monto)} · ${json.categoria}`);
+  } catch(e) {
+    showToast('No pude leer la boleta. Ingresa manualmente');
+  }
+  if (btn) btn.textContent = '📷 Foto boleta';
+  event.target.value = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 4: NOTIFICACIONES (Web Push)
+// ══════════════════════════════════════════════════════════════
+async function solicitarNotificaciones() {
+  if (!('Notification' in window)) { showToast('Tu navegador no soporta notificaciones'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    localStorage.setItem('coicitos_notif', '1');
+    showToast('✓ Notificaciones activadas');
+    verificarAlertas();
+  } else {
+    showToast('Notificaciones denegadas');
+  }
+}
+
+function verificarAlertas() {
+  if (Notification.permission !== 'granted') return;
+  const catGasto = {}, catPres = {};
+  estado.variables.forEach(g => { const c = g.cat||'Otros'; catGasto[c] = (catGasto[c]||0) + (g.monto||0); });
+  estado.fijos.forEach(f => { const c = f.cat||'Otros'; catPres[c] = (catPres[c]||0) + (f.pres||0); });
+  estado.categorias.forEach(c => { catPres[c.categoria] = (catPres[c.categoria]||0) + (c.presupuesto||0); });
+
+  for (const [cat, gasto] of Object.entries(catGasto)) {
+    const pres = catPres[cat] || 0;
+    if (pres > 0) {
+      const p = Math.round(gasto / pres * 100);
+      const lastKey = `notif_${mesActual}_${anioActual}_${cat}`;
+      const lastPct = parseInt(localStorage.getItem(lastKey) || '0');
+      if (p >= 90 && lastPct < 90) {
+        new Notification('⚠️ Coicitos — Alerta de presupuesto', {
+          body: `${cat}: ${p}% del presupuesto utilizado (${fmt(gasto)} de ${fmt(pres)})`,
+          icon: '🏠'
+        });
+        localStorage.setItem(lastKey, p);
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 5: PROYECCIÓN DE CIERRE DE MES
+// ══════════════════════════════════════════════════════════════
+function calcularProyeccion() {
+  const hoy = new Date();
+  const diaActual = hoy.getDate();
+  const diasMes = new Date(anioActual, mesActual + 1, 0).getDate();
+  const diasRestantes = diasMes - diaActual;
+
+  const gastadoVar = estado.variables.reduce((s,g) => s + (g.monto||0), 0);
+  const gastadoFij = estado.fijos.reduce((s,f) => s + (f.actual||0), 0);
+  const totalGastado = gastadoVar + gastadoFij;
+
+  const ritmoVar = diaActual > 0 ? gastadoVar / diaActual : 0;
+  const proyectadoVar = ritmoVar * diasMes;
+  const proyeccionTotal = proyectadoVar + gastadoFij;
+
+  const totalIngresos = estado.ingresos.reduce((s,i) => s + (i.monto||0), 0);
+  const balanceProyectado = totalIngresos - proyeccionTotal;
+
+  return { diaActual, diasMes, diasRestantes, totalGastado, proyeccionTotal, balanceProyectado, ritmoVar };
+}
+
+function renderProyeccion() {
+  const el = document.getElementById('proyeccion-container');
+  if (!el) return;
+  const p = calcularProyeccion();
+  const color = p.balanceProyectado >= 0 ? 'var(--green)' : 'var(--red)';
+  const icon = p.balanceProyectado >= 0 ? '📈' : '📉';
+  el.innerHTML = `
+    <div style="background:var(--surface2);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+        ${icon} Proyección al cierre — día ${p.diaActual} de ${p.diasMes}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--ink3);margin-bottom:3px;">Gasto diario promedio</div>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">${fmt(p.ritmoVar)}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--ink3);margin-bottom:3px;">Proyección total mes</div>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;">${fmt(p.proyeccionTotal)}</div>
+        </div>
+        <div style="grid-column:span 2;">
+          <div style="font-size:10px;color:var(--ink3);margin-bottom:3px;">Balance proyectado al cierre</div>
+          <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:${color};">${fmt(p.balanceProyectado)}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px;">${p.diasRestantes} días restantes en el mes</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 6: MODO MISERABLE
+// ══════════════════════════════════════════════════════════════
+let modoMiserable = false;
+
+function toggleMiserable() {
+  modoMiserable = !modoMiserable;
+  const overlay = document.getElementById('modo-miserable-overlay');
+  if (modoMiserable) {
+    const totalIngresos = estado.ingresos.reduce((s,i) => s+(i.monto||0), 0);
+    const totalGastado = estado.variables.reduce((s,g) => s+(g.monto||0), 0) + estado.fijos.reduce((s,f) => s+(f.actual||0), 0);
+    const disponible = totalIngresos - totalGastado;
+    const color = disponible >= 0 ? '#16A34A' : '#DC2626';
+    const emoji = disponible >= 0 ? '😌' : '😱';
+    overlay.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;" onclick="toggleMiserable()">
+        <div style="font-size:64px;margin-bottom:16px;">${emoji}</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;">Disponible</div>
+        <div style="font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:${color};line-height:1;">${fmt(disponible)}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:24px;">Toca para salir</div>
+      </div>`;
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  } else {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 8: COMPARADOR DE MESES
+// ══════════════════════════════════════════════════════════════
+async function renderComparador() {
+  const m1 = parseInt(document.getElementById('comp-mes1').value);
+  const m2 = parseInt(document.getElementById('comp-mes2').value);
+  const a1 = parseInt(document.getElementById('comp-anio1').value);
+  const a2 = parseInt(document.getElementById('comp-anio2').value);
+  const el = document.getElementById('comparador-resultado');
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink3);">Cargando...</div>';
+
+  const [i1,f1,v1,i2,f2,v2] = await Promise.all([
+    sb.from('presupuesto_ingresos').select('*').eq('user_id',userId).eq('anio',a1).eq('mes',m1),
+    sb.from('presupuesto_fijos').select('*').eq('user_id',userId).eq('anio',a1).eq('mes',m1),
+    sb.from('presupuesto_variables').select('*').eq('user_id',userId).eq('anio',a1).eq('mes',m1),
+    sb.from('presupuesto_ingresos').select('*').eq('user_id',userId).eq('anio',a2).eq('mes',m2),
+    sb.from('presupuesto_fijos').select('*').eq('user_id',userId).eq('anio',a2).eq('mes',m2),
+    sb.from('presupuesto_variables').select('*').eq('user_id',userId).eq('anio',a2).eq('mes',m2),
+  ]);
+
+  const calc = (ing, fij, vari) => ({
+    ingresos: (ing.data||[]).reduce((s,x)=>s+(x.monto||0),0),
+    fijos: (fij.data||[]).reduce((s,x)=>s+(x.actual||0),0),
+    variables: (vari.data||[]).reduce((s,x)=>s+(x.monto||0),0),
+    cats: (vari.data||[]).reduce((acc,x)=>{ acc[x.cat||'Otros']=(acc[x.cat||'Otros']||0)+(x.monto||0); return acc; }, {})
+  });
+
+  const d1 = calc(i1,f1,v1), d2 = calc(i2,f2,v2);
+  const t1 = d1.fijos+d1.variables, t2 = d2.fijos+d2.variables;
+  const b1 = d1.ingresos-t1, b2 = d2.ingresos-t2;
+
+  const row = (label, v1, v2) => {
+    const diff = v2 - v1;
+    const diffColor = diff > 0 ? 'var(--red)' : diff < 0 ? 'var(--green)' : 'var(--ink3)';
+    const diffSign = diff > 0 ? '+' : '';
+    return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);align-items:center;">
+      <div style="font-size:12px;font-weight:500;">${label}</div>
+      <div style="text-align:right;font-family:'Playfair Display',serif;font-size:13px;">${fmt(v1)}</div>
+      <div style="text-align:right;">
+        <div style="font-family:'Playfair Display',serif;font-size:13px;">${fmt(v2)}</div>
+        ${diff !== 0 ? `<div style="font-size:10px;color:${diffColor};">${diffSign}${fmt(diff)}</div>` : ''}
+      </div>
+    </div>`;
+  };
+
+  const allCats = new Set([...Object.keys(d1.cats), ...Object.keys(d2.cats)]);
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px 0;margin-bottom:4px;">
+      <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;"></div>
+      <div style="text-align:right;font-size:11px;font-weight:600;color:var(--accent);">${MESES[m1]} ${a1}</div>
+      <div style="text-align:right;font-size:11px;font-weight:600;color:var(--accent);">${MESES[m2]} ${a2}</div>
+    </div>
+    ${row('Ingresos', d1.ingresos, d2.ingresos)}
+    ${row('Gastos fijos', d1.fijos, d2.fijos)}
+    ${row('Gastos variables', d1.variables, d2.variables)}
+    ${row('Total gastado', t1, t2)}
+    ${row('Balance', b1, b2)}
+    <div style="font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 4px;">Por categoría</div>
+    ${[...allCats].map(c => row(c, d1.cats[c]||0, d2.cats[c]||0)).join('')}`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 9: METAS DE AHORRO
+// ══════════════════════════════════════════════════════════════
+function getMetas() { return JSON.parse(localStorage.getItem('coicitos_metas') || '[]'); }
+function saveMetas(m) { localStorage.setItem('coicitos_metas', JSON.stringify(m)); }
+
+function renderMetas() {
+  const el = document.getElementById('metas-list');
+  if (!el) return;
+  const metas = getMetas();
+  const balanceMes = estado.ingresos.reduce((s,i)=>s+(i.monto||0),0)
+    - estado.variables.reduce((s,g)=>s+(g.monto||0),0)
+    - estado.fijos.reduce((s,f)=>s+(f.actual||0),0);
+  const ahorroMensualProm = Math.max(balanceMes, 0);
+
+  if (!metas.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>Sin metas definidas aún</div>';
+    return;
+  }
+
+  el.innerHTML = metas.map((m, i) => {
+    const pct = Math.min(Math.round((m.acumulado||0) / m.objetivo * 100), 100);
+    const restante = m.objetivo - (m.acumulado||0);
+    const mesesEst = ahorroMensualProm > 0 ? Math.ceil(restante / ahorroMensualProm) : null;
+    const color = pct >= 100 ? 'var(--green)' : 'var(--accent)';
+    return `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-weight:600;font-size:14px;">${m.emoji||'🎯'} ${m.nombre}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:2px;">Meta: ${fmt(m.objetivo)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:${color};">${pct}%</div>
+          ${mesesEst && pct < 100 ? `<div style="font-size:10px;color:var(--ink3);">~${mesesEst} meses</div>` : ''}
+          ${pct >= 100 ? '<div style="font-size:11px;color:var(--green);font-weight:600;">¡Logrado! 🎉</div>' : ''}
+        </div>
+      </div>
+      <div style="background:var(--border);border-radius:3px;height:6px;margin-bottom:10px;">
+        <div style="height:100%;border-radius:3px;background:${color};width:${pct}%;transition:width 0.5s;"></div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" placeholder="Agregar ahorro ($)" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);font-family:'Inter',sans-serif;" id="meta-aporte-${i}">
+        <button onclick="aportarMeta(${i})" style="padding:6px 12px;border-radius:6px;background:var(--accent);color:white;border:none;font-size:12px;cursor:pointer;">+ Aportar</button>
+        <button onclick="eliminarMeta(${i})" class="btn-ghost" style="padding:6px 10px;font-size:12px;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function agregarMeta() {
+  const nombre = document.getElementById('meta-nombre').value.trim();
+  const objetivo = parseFloat(document.getElementById('meta-objetivo').value)||0;
+  const emoji = document.getElementById('meta-emoji').value||'🎯';
+  if (!nombre || !objetivo) { showToast('Completa nombre y objetivo'); return; }
+  const metas = getMetas();
+  metas.push({ nombre, objetivo, emoji, acumulado: 0, creado: new Date().toISOString() });
+  saveMetas(metas);
+  document.getElementById('meta-nombre').value='';
+  document.getElementById('meta-objetivo').value='';
+  renderMetas();
+  showToast('✓ Meta creada');
+}
+
+function aportarMeta(i) {
+  const val = parseFloat(document.getElementById(`meta-aporte-${i}`)?.value)||0;
+  if (!val) { showToast('Ingresa un monto'); return; }
+  const metas = getMetas();
+  metas[i].acumulado = (metas[i].acumulado||0) + val;
+  saveMetas(metas);
+  renderMetas();
+  showToast(`✓ +${fmt(val)} a "${metas[i].nombre}"`);
+}
+
+function eliminarMeta(i) {
+  if (!confirm('¿Eliminar esta meta?')) return;
+  const metas = getMetas();
+  metas.splice(i, 1);
+  saveMetas(metas);
+  renderMetas();
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 10: WRAPPED ANUAL
+// ══════════════════════════════════════════════════════════════
+async function generarWrapped() {
+  const el = document.getElementById('wrapped-content');
+  el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink3);">Analizando tu año... ✨</div>';
+
+  const [ing,fij,vari] = await Promise.all([
+    sb.from('presupuesto_ingresos').select('*').eq('user_id',userId).eq('anio',anioActual),
+    sb.from('presupuesto_fijos').select('*').eq('user_id',userId).eq('anio',anioActual),
+    sb.from('presupuesto_variables').select('*').eq('user_id',userId).eq('anio',anioActual),
+  ]);
+
+  const MESES_N = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const totalAnual = (vari.data||[]).reduce((s,x)=>s+(x.monto||0),0) + (fij.data||[]).reduce((s,x)=>s+(x.actual||0),0);
+  const ingAnual = (ing.data||[]).reduce((s,x)=>s+(x.monto||0),0);
+  const ahorro = ingAnual - totalAnual;
+  const gastoDiario = Math.round(totalAnual / 365);
+
+  // Categoría más cara
+  const cats = {};
+  (vari.data||[]).forEach(g => { const c=g.cat||'Otros'; cats[c]=(cats[c]||0)+(g.monto||0); });
+  const catTop = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+
+  // Mes más austero (menor gasto variable)
+  const porMes = {};
+  (vari.data||[]).forEach(g => { porMes[g.mes]=(porMes[g.mes]||0)+(g.monto||0); });
+  const mesAustero = Object.entries(porMes).sort((a,b)=>a[1]-b[1])[0];
+  const mesCaro = Object.entries(porMes).sort((a,b)=>b[1]-a[1])[0];
+
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,var(--header-bg),var(--accent));border-radius:16px;padding:24px;color:white;margin-bottom:16px;">
+      <div style="font-size:28px;margin-bottom:8px;">✨</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px;">Tu año ${anioActual}</div>
+      <div style="font-size:13px;opacity:0.7;">Resumen financiero Coicitos</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total gastado</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;">${fmt(totalAnual)}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Ahorro neto</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:${ahorro>=0?'var(--green)':'var(--red)'};">${fmt(ahorro)}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Gasto diario prom.</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;">${fmt(gastoDiario)}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Ingresos anuales</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--accent);">${fmt(ingAnual)}</div>
+      </div>
+    </div>
+    ${catTop ? `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:4px;">🏆 Tu categoría más cara del año</div>
+      <div style="font-size:18px;font-weight:700;">${catTop[0]} — ${fmt(catTop[1])}</div>
+    </div>` : ''}
+    ${mesAustero ? `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:11px;color:var(--ink3);margin-bottom:4px;">🌿 Mes más austero</div>
+          <div style="font-weight:700;">${MESES_N[mesAustero[0]]}</div>
+          <div style="font-size:12px;color:var(--ink2);">${fmt(mesAustero[1])}</div>
+        </div>
+        ${mesCaro ? `<div>
+          <div style="font-size:11px;color:var(--ink3);margin-bottom:4px;">🔥 Mes más caro</div>
+          <div style="font-weight:700;">${MESES_N[mesCaro[0]]}</div>
+          <div style="font-size:12px;color:var(--ink2);">${fmt(mesCaro[1])}</div>
+        </div>` : ''}
+      </div>
+    </div>` : ''}
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:8px;">📊 Gastos variables por mes</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+        ${MESES_N.map((_,m) => {
+          const v = porMes[m]||0;
+          const maxV = Math.max(...Object.values(porMes),1);
+          const h = Math.round(v/maxV*100);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+            <div style="width:100%;height:${h}%;background:var(--accent);border-radius:2px 2px 0 0;min-height:${v>0?2:0}px;"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:4px;margin-top:4px;">
+        ${MESES_N.map(m=>`<div style="flex:1;text-align:center;font-size:8px;color:var(--ink3);">${m}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
 
 // ── TOAST ─────────────────────────────────────────────────────────
 function showToast(msg){
