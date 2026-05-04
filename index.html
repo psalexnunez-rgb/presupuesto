@@ -709,7 +709,25 @@ async function cargarMes(){
   estado.fijos=fij.data||[];
   estado.variables=vari.data||[];
   estado.categorias=cats.data||[];
-  if(estado.ingresos.length===0)await initMesBase();
+
+  // Solo inicializar si el mes está genuinamente vacío en Supabase
+  // Usamos count explícito para evitar falsos negativos por red lenta
+  if(estado.ingresos.length===0 && estado.fijos.length===0){
+    const {count}=await sb.from('presupuesto_fijos')
+      .select('*',{count:'exact',head:true})
+      .eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual);
+    if(count===0){
+      await initMesBase();
+    } else {
+      // Hay datos — reintentar lectura
+      const [r1,r2]=await Promise.all([
+        sb.from('presupuesto_ingresos').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
+        sb.from('presupuesto_fijos').select('*').eq('user_id',userId).eq('anio',anioActual).eq('mes',mesActual),
+      ]);
+      estado.ingresos=r1.data||[];
+      estado.fijos=r2.data||[];
+    }
+  }
   setSyncing(false);
   iniciarRealtime();
   renderAll();
