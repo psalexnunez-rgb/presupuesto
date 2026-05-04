@@ -684,6 +684,8 @@ async function loginSubmit(){
 }
 
 async function logout(){
+  if (window._pollingInterval) clearInterval(window._pollingInterval);
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
   await sb.auth.signOut();
   location.reload();
 }
@@ -1297,25 +1299,18 @@ function iniciarRealtime() {
   if (realtimeChannel) sb.removeChannel(realtimeChannel);
 
   realtimeChannel = sb.channel(`presupuesto_${userId}_${anioActual}_${mesActual}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'presupuesto_variables',
-      filter: `user_id=eq.${userId}`
-    }, () => recargarSilencioso())
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'presupuesto_fijos',
-      filter: `user_id=eq.${userId}`
-    }, () => recargarSilencioso())
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'presupuesto_categorias',
-      filter: `user_id=eq.${userId}`
-    }, () => recargarSilencioso())
-    .subscribe();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuesto_variables', filter: `user_id=eq.${userId}` }, () => recargarSilencioso())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuesto_fijos', filter: `user_id=eq.${userId}` }, () => recargarSilencioso())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuesto_categorias', filter: `user_id=eq.${userId}` }, () => recargarSilencioso())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'presupuesto_ingresos', filter: `user_id=eq.${userId}` }, () => recargarSilencioso())
+    .subscribe((status) => {
+      // Si el Realtime falla o no conecta, el polling de respaldo cubre igual
+      console.log('Realtime status:', status);
+    });
+
+  // Polling de respaldo cada 30s — cubre casos donde Realtime no dispara
+  if (window._pollingInterval) clearInterval(window._pollingInterval);
+  window._pollingInterval = setInterval(() => recargarSilencioso(), 30000);
 }
 
 let recargarTimeout = null;
@@ -1384,6 +1379,7 @@ function showTab(name,btn){
   if(btn)btn.classList.add('active');
   if(name==='anual')renderAnual();
   if(name==='metas')renderMetas();
+  if(name==='categorias')recargarSilencioso(); // fuerza recarga al abrir Categorías
 }
 
 // ══════════════════════════════════════════════════════════════
