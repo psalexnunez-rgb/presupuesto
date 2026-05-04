@@ -238,7 +238,6 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
         </select>
       </div>
       <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt" class="sync-txt-label">Guardado</span></div>
-      <button class="btn-header" onclick="toggleMiserable()" title="Modo miserable" style="font-size:15px;padding:4px 8px;">😩</button>
       <button class="btn-header" onclick="recargarManual()" title="Sincronizar" style="font-size:15px;padding:4px 10px;">↻</button>
       <button class="btn-header" onclick="logout()">Salir</button>
     </div>
@@ -497,6 +496,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
       </div>
 
       <div class="card">
+        <div class="card-title">Modo miserable 😩</div>
+        <p style="font-size:12px;color:var(--ink2);margin-bottom:12px;">Muestra solo cuánto dinero te queda disponible. Nada más.</p>
+        <button class="btn-primary" onclick="toggleMiserable()">Activar modo miserable</button>
+      </div>
+      <div class="card">
         <div class="card-title">Notificaciones</div>
         <p style="font-size:12px;color:var(--ink2);margin-bottom:12px;">Recibe alertas cuando una categoría supere el 90% del presupuesto.</p>
         <button class="btn-primary" onclick="solicitarNotificaciones()" style="background:var(--orange);">🔔 Activar notificaciones</button>
@@ -526,72 +530,72 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-he
       </div>
 
     </div>
-  </div>
-</div>
 
-<!-- TABS NUEVOS insertados fuera del app-screen por espacio — los movemos adentro vía JS -->
-<!-- COMPARADOR -->
-<div id="tab-comparador" class="tab-content" style="display:none;">
-  <div class="card">
-    <div class="card-title">Comparar dos meses</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-      <div class="form-group">
-        <label>Mes 1</label>
-        <select id="comp-mes1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
-          <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-        </select>
-        <select id="comp-anio1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
-          <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Mes 2</label>
-        <select id="comp-mes2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
-          <option value="0">Enero</option><option value="1" selected>Febrero</option><option value="2">Marzo</option>
-          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-        </select>
-        <select id="comp-anio2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
-          <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
-        </select>
+    <!-- COMPARADOR -->
+    <div id="tab-comparador" class="tab-content">
+      <div class="card">
+        <div class="card-title">Comparar dos meses</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="form-group">
+            <label>Mes 1</label>
+            <select id="comp-mes1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
+              <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+              <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+              <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+              <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+            </select>
+            <select id="comp-anio1" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
+              <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mes 2</label>
+            <select id="comp-mes2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;">
+              <option value="0">Enero</option><option value="1" selected>Febrero</option><option value="2">Marzo</option>
+              <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+              <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+              <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+            </select>
+            <select id="comp-anio2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;font-family:'Inter',sans-serif;margin-top:6px;">
+              <option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="renderComparador()">Comparar</button>
+        <div id="comparador-resultado" style="margin-top:16px;"></div>
       </div>
     </div>
-    <button class="btn-primary" onclick="renderComparador()">Comparar</button>
-    <div id="comparador-resultado" style="margin-top:16px;"></div>
-  </div>
-</div>
 
-<!-- METAS -->
-<div id="tab-metas" class="tab-content" style="display:none;">
-  <div class="card">
-    <div class="card-title">Metas de ahorro 🎯</div>
-    <div id="metas-list"></div>
-    <div class="divider"></div>
-    <div class="section-label" style="margin-bottom:10px;">Nueva meta</div>
-    <div class="gasto-form">
-      <div class="form-row">
-        <div class="form-group"><label>Emoji</label><input type="text" id="meta-emoji" placeholder="🎯" maxlength="2" style="font-size:20px;text-align:center;"></div>
-        <div class="form-group"><label>Nombre</label><input type="text" id="meta-nombre" placeholder="Ej: Viaje a Europa"></div>
+    <!-- METAS -->
+    <div id="tab-metas" class="tab-content">
+      <div class="card">
+        <div class="card-title">Metas de ahorro 🎯</div>
+        <div id="metas-list"></div>
+        <div class="divider"></div>
+        <div class="section-label" style="margin-bottom:10px;">Nueva meta</div>
+        <div class="gasto-form">
+          <div class="form-row">
+            <div class="form-group"><label>Emoji</label><input type="text" id="meta-emoji" placeholder="🎯" maxlength="2" style="font-size:20px;text-align:center;"></div>
+            <div class="form-group"><label>Nombre</label><input type="text" id="meta-nombre" placeholder="Ej: Viaje a Europa"></div>
+          </div>
+          <div class="form-group"><label>Monto objetivo ($)</label><input type="number" id="meta-objetivo" placeholder="0"></div>
+          <button class="btn-primary" onclick="agregarMeta()">Crear meta</button>
+        </div>
       </div>
-      <div class="form-group"><label>Monto objetivo ($)</label><input type="number" id="meta-objetivo" placeholder="0"></div>
-      <button class="btn-primary" onclick="agregarMeta()">Crear meta</button>
     </div>
-  </div>
-</div>
 
-<!-- WRAPPED -->
-<div id="tab-wrapped" class="tab-content" style="display:none;">
-  <div class="card">
-    <div class="card-title">Tu año en números ✨</div>
-    <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;">Resumen financiero anual — todo lo que pasó con tus finanzas.</p>
-    <button class="btn-primary" onclick="generarWrapped()" style="margin-bottom:16px;">✨ Generar Wrapped</button>
-    <div id="wrapped-content"></div>
-  </div>
-</div>
+    <!-- WRAPPED -->
+    <div id="tab-wrapped" class="tab-content">
+      <div class="card">
+        <div class="card-title">Tu año en números ✨</div>
+        <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;">Resumen financiero anual — todo lo que pasó con tus finanzas.</p>
+        <button class="btn-primary" onclick="generarWrapped()" style="margin-bottom:16px;">✨ Generar Wrapped</button>
+        <div id="wrapped-content"></div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end app-screen -->
 
 <!-- MODO MISERABLE -->
 <div id="modo-miserable-overlay" style="display:none;position:fixed;inset:0;background:#0A0A0A;z-index:500;align-items:center;justify-content:center;"></div>
@@ -1373,11 +1377,6 @@ function initTema(){aplicarTema(localStorage.getItem('coicitos_tema')||'pizarra'
 
 // ── NAV ─────────────────────────────────────────────────────────
 function showTab(name,btn){
-  const main=document.querySelector('.main');
-  ['comparador','metas','wrapped'].forEach(t=>{
-    const el=document.getElementById('tab-'+t);
-    if(el&&el.parentElement!==main)main.appendChild(el);
-  });
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const tab=document.getElementById('tab-'+name);
