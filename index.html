@@ -27,6 +27,7 @@
   --teal:#34D399;--teal-light:rgba(52,211,153,0.15);
   --pink:#F472B6;--pink-light:rgba(244,114,182,0.15);
   --border:rgba(255,255,255,0.14);--radius:12px;--shadow:0 4px 24px rgba(0,0,0,0.25);
+  --fs-base:14px;--fs-sm:12px;--fs-xs:11px;--fs-lg:16px;--fs-xl:22px;--fs-title:16px;
 }
 body.tema-oceano{--grad-a:#0A1628;--grad-b:#0F2A4A;--grad-c:#0D2040;--accent:#60A5FA;--nav-active:#60A5FA;}
 body.tema-bosque{--grad-a:#0A1F0F;--grad-b:#0F3018;--grad-c:#0B2512;--accent:#4ADE80;--nav-active:#4ADE80;}
@@ -34,7 +35,7 @@ body.tema-marina{--grad-a:#071E26;--grad-b:#0C2F3A;--grad-c:#09242F;--accent:#34
 body.tema-pizarra{--grad-a:#130F2E;--grad-b:#1E1750;--grad-c:#171244;--accent:#A78BFA;--nav-active:#A78BFA;}
 body.tema-laguna{--grad-a:#061E20;--grad-b:#0C2F32;--grad-c:#092428;--accent:#2DD4BF;--nav-active:#2DD4BF;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:linear-gradient(135deg,var(--grad-a) 0%,var(--grad-b) 50%,var(--grad-c) 100%);background-attachment:fixed;color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;font-size:14px;}
+body{background:linear-gradient(135deg,var(--grad-a) 0%,var(--grad-b) 50%,var(--grad-c) 100%);background-attachment:fixed;color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;font-size:var(--fs-base);}
 
 /* LOGIN */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--grad-a),var(--grad-b),var(--grad-c));}
@@ -240,6 +241,35 @@ body{background:linear-gradient(135deg,var(--grad-a) 0%,var(--grad-b) 50%,var(--
 .kpi{background:rgba(255,255,255,0.12)!important;border:1px solid rgba(255,255,255,0.18)!important;}
 .gasto-item,.fijo-item{background:rgba(255,255,255,0.10)!important;}
 .filtro-btn{background:rgba(255,255,255,0.10)!important;}
+
+/* ── TAMAÑOS DE FUENTE ─────── */
+body.fs-normal{--fs-base:14px;--fs-sm:12px;--fs-xs:11px;--fs-lg:16px;--fs-xl:22px;--fs-title:16px;}
+body.fs-grande{--fs-base:16px;--fs-sm:13px;--fs-xs:12px;--fs-lg:18px;--fs-xl:24px;--fs-title:18px;}
+body.fs-muy-grande{--fs-base:18px;--fs-sm:15px;--fs-xs:13px;--fs-lg:20px;--fs-xl:26px;--fs-title:20px;}
+body.fs-enorme{--fs-base:20px;--fs-sm:16px;--fs-xs:14px;--fs-lg:22px;--fs-xl:28px;--fs-title:22px;}
+
+/* Aplicar variables a componentes clave */
+.nav-btn{font-size:var(--fs-sm)!important;}
+.card-title{font-size:var(--fs-title)!important;}
+.kpi-label{font-size:var(--fs-xs)!important;}
+.kpi-val{font-size:var(--fs-xl)!important;}
+.kpi-sub{font-size:var(--fs-sm)!important;}
+.section-label{font-size:var(--fs-xs)!important;}
+.btn-primary,.btn-outline,.btn-ghost{font-size:var(--fs-sm)!important;}
+.form-group label{font-size:var(--fs-xs)!important;}
+.form-group input,.form-group select{font-size:var(--fs-sm)!important;}
+.gasto-item,.fijo-item{font-size:var(--fs-sm)!important;}
+.cat-badge{font-size:var(--fs-xs)!important;}
+.filtro-btn{font-size:var(--fs-xs)!important;}
+.ingreso-item{font-size:var(--fs-base)!important;}
+.anual-table{font-size:var(--fs-sm)!important;}
+.prog-label{font-size:var(--fs-sm)!important;}
+.prog-name{font-size:var(--fs-sm)!important;}
+.header-title{font-size:calc(var(--fs-lg) + 2px)!important;}
+.header-sub,.header-select,.btn-header{font-size:var(--fs-xs)!important;}
+.total-label{font-size:var(--fs-sm)!important;}
+.total-val{font-size:var(--fs-lg)!important;}
+.section-white .kpi-val{font-size:var(--fs-xl)!important;}
 </style>
 </head>
 <body>
@@ -514,6 +544,28 @@ body{background:linear-gradient(135deg,var(--grad-a) 0%,var(--grad-b) 50%,var(--
     <div id="tab-config" class="tab-content">
 
       <div class="card">
+        <div class="card-title">Tamaño de letra</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div class="fs-card" id="fs-normal" onclick="aplicarFuente('normal')" style="text-align:center;padding:12px 8px;border-radius:9px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Aa</div>
+            <div style="font-size:10px;color:var(--ink3);">Normal</div>
+          </div>
+          <div class="fs-card" id="fs-grande" onclick="aplicarFuente('grande')" style="text-align:center;padding:12px 8px;border-radius:9px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;">
+            <div style="font-size:17px;font-weight:600;margin-bottom:4px;">Aa</div>
+            <div style="font-size:10px;color:var(--ink3);">Grande</div>
+          </div>
+          <div class="fs-card" id="fs-muy-grande" onclick="aplicarFuente('muy-grande')" style="text-align:center;padding:12px 8px;border-radius:9px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;">
+            <div style="font-size:20px;font-weight:600;margin-bottom:4px;">Aa</div>
+            <div style="font-size:10px;color:var(--ink3);">Mayor</div>
+          </div>
+          <div class="fs-card" id="fs-enorme" onclick="aplicarFuente('enorme')" style="text-align:center;padding:12px 8px;border-radius:9px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;">
+            <div style="font-size:23px;font-weight:600;margin-bottom:4px;">Aa</div>
+            <div style="font-size:10px;color:var(--ink3);">Enorme</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-title">Tema de color</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="tema-card" id="tc-oceano" onclick="aplicarTema('oceano')">
@@ -709,6 +761,7 @@ let filtroActivo='Todos';
 // ── AUTH ─────────────────────────────────────────────────────────
 async function init(){
   initTema();
+  initFuente();
   const {data:{session}}=await sb.auth.getSession();
   if(session){userId=session.user.id;showApp();}
   else{
@@ -1457,6 +1510,20 @@ async function recargarManual() {
   showToast('✓ Datos actualizados');
 }
 const TEMAS=['oceano','bosque','marina','pizarra','laguna'];
+// ── TAMAÑO FUENTE ─────────────────────────────────────────────────
+const FUENTES=['normal','grande','muy-grande','enorme'];
+function aplicarFuente(tam){
+  FUENTES.forEach(f=>{
+    document.body.classList.remove('fs-'+f);
+    const el=document.getElementById('fs-'+f);
+    if(el)el.style.borderColor=f===tam?'var(--accent)':'var(--border)';
+  });
+  document.body.classList.add('fs-'+tam);
+  localStorage.setItem('coicitos_fuente',tam);
+  showToast('Tamaño aplicado');
+}
+function initFuente(){aplicarFuente(localStorage.getItem('coicitos_fuente')||'normal');}
+
 function aplicarTema(tema){
   document.body.className=`tema-${tema}`;
   localStorage.setItem('coicitos_tema',tema);
