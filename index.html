@@ -758,6 +758,14 @@ const SUPABASE_URL='https://ybztenzmpwufcvzvmwao.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlienRlbnptcHd1ZmN2enZtd2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MzM0NzYsImV4cCI6MjA5MjUwOTQ3Nn0.bHC65JMkp6LSd9qWEVgZyhwtLlnOYzVjuEHV46LfVag';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 
+// Definir showToast primero — la usan funciones que se ejecutan en init()
+function showToast(msg){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const GASTOS_FIJOS_BASE=[
   {nombre:'Gas',pres:49390,cat:'Hogar'},{nombre:'Electricidad',pres:80000,cat:'Hogar'},
@@ -1537,7 +1545,6 @@ async function recargarManual() {
   renderAll();
   showToast('✓ Datos actualizados');
 }
-const TEMAS=['oceano','bosque','marina','pizarra','laguna'];
 // ── TAMAÑO FUENTE ─────────────────────────────────────────────────
 const FUENTES=['normal','grande','muy-grande','enorme'];
 function aplicarFuente(tam){
@@ -1548,7 +1555,6 @@ function aplicarFuente(tam){
   });
   document.body.classList.add('fs-'+tam);
   localStorage.setItem('coicitos_fuente',tam);
-  showToast('Tamaño aplicado');
 }
 function initFuente(){aplicarFuente(localStorage.getItem('coicitos_fuente')||'normal');}
 
@@ -1557,7 +1563,6 @@ const TEMAS=['c1','c2'];
 function aplicarTema(tema){
   document.body.className=document.body.className
     .split(' ').filter(c=>!c.startsWith('tema-')&&!c.startsWith('fs-')).join(' ');
-  // Re-aplicar fuente
   const fuente=localStorage.getItem('coicitos_fuente')||'normal';
   document.body.classList.add('fs-'+fuente);
   if(tema==='c2') document.body.classList.add('tema-c2');
@@ -1568,7 +1573,6 @@ function aplicarTema(tema){
     if(c)c.classList.toggle('activo',t===tema);
     if(k)k.textContent=t===tema?'✓':'';
   });
-  showToast('Tema aplicado');
 }
 function initTema(){aplicarTema(localStorage.getItem('coicitos_tema')||'c1');}
 
